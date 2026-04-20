@@ -27,10 +27,28 @@ export interface LoginResponse {
   expiresIn?: number
 }
 
+function normalizeKeycloakError(status: number, body: unknown): string {
+  const payload = body && typeof body === "object" ? body as Record<string, unknown> : {}
+  const errorCode = typeof payload.error === "string" ? payload.error : ""
+  const errorDescription = typeof payload.error_description === "string" ? payload.error_description : ""
+  const message = typeof payload.message === "string" ? payload.message : ""
+
+  if (errorCode === "invalid_client") {
+    return "El cliente de Keycloak configurado en el frontend no existe o no permite este tipo de login."
+  }
+
+  if (errorCode === "invalid_grant" || status === 401) {
+    return "Credenciales incorrectas o usuario no autorizado en Keycloak."
+  }
+
+  return errorDescription || message || "Error al iniciar sesión con Keycloak"
+}
+
 export async function postLogin(payload: LoginPayload): Promise<LoginResponse> {
   const tokenUrl = buildTokenUrl()
+  const clientId = getRequiredEnv("VITE_KEYCLOAK_CLIENT_ID")
   const body = new URLSearchParams({
-    client_id: getRequiredEnv("VITE_KEYCLOAK_CLIENT_ID"),
+    client_id: clientId,
     grant_type: "password",
     username: payload.username,
     password: payload.password,
@@ -43,7 +61,7 @@ export async function postLogin(payload: LoginPayload): Promise<LoginResponse> {
 
   debugLog("auth", "Solicitando token a Keycloak", {
     url: tokenUrl,
-    clientId: getRequiredEnv("VITE_KEYCLOAK_CLIENT_ID"),
+    clientId,
     username: payload.username,
     scope,
   })
@@ -70,22 +88,25 @@ export async function postLogin(payload: LoginPayload): Promise<LoginResponse> {
     ok: response.ok,
   })
 
+  const responseBody = await response.json().catch(() => null)
+
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}))
-    debugLog("auth", "Keycloak rechazó el login", body)
-    const keycloakMessage = body?.error_description ?? body?.message
-    const message =
-      keycloakMessage ||
-      (response.status === 401
-        ? "Credenciales incorrectas"
-        : "Error al iniciar sesión con Keycloak")
-    throw new Error(message)
+    debugLog("auth", "Keycloak rechazó el login", responseBody)
+    throw new Error(normalizeKeycloakError(response.status, responseBody))
   }
 
-  const data = (await response.json()) as {
+  const data = (responseBody ?? {}) as {
     access_token: string
     refresh_token?: string
     expires_in?: number
+  }
+
+  if (typeof data.access_token !== "string" || !data.access_token.trim()) {
+    debugLog("auth", "Keycloak respondió sin access_token válido", {
+      clientId,
+      body: responseBody,
+    })
+    throw new Error("Keycloak respondió correctamente, pero no entregó un JWT válido.")
   }
 
   debugLog("auth", "Token recibido correctamente", {

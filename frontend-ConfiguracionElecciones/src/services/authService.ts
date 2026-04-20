@@ -47,20 +47,29 @@ function resolveTokenExpiration(token: string, expiresIn?: number): number | nul
   return null
 }
 
+function ensureToken(token: string | undefined): string {
+  if (typeof token === "string" && token.trim()) {
+    return token
+  }
+  throw new Error("No se recibió un JWT válido desde Keycloak.")
+}
+
 export async function login(payload: LoginPayload): Promise<void> {
   debugLog("auth-service", "Iniciando login en frontend", {
     username: payload.username,
   })
 
   const data = await postLogin(payload)
-  localStorage.setItem(TOKEN_KEY, data.token)
+  const token = ensureToken(data.token)
+
+  localStorage.setItem(TOKEN_KEY, token)
   if (data.refreshToken) {
     localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken)
   } else {
     localStorage.removeItem(REFRESH_TOKEN_KEY)
   }
 
-  const expiresAt = resolveTokenExpiration(data.token, data.expiresIn)
+  const expiresAt = resolveTokenExpiration(token, data.expiresIn)
   if (expiresAt) {
     localStorage.setItem(TOKEN_EXP_KEY, String(expiresAt))
   } else {
@@ -76,7 +85,7 @@ export async function login(payload: LoginPayload): Promise<void> {
   })
 
   try {
-    await validarTokenConGateway(data.token)
+    await validarTokenConGateway(token)
     debugLog("auth-service", "Token validado exitosamente con el gateway")
   } catch (error) {
     debugLog("auth-service", "Gateway rechazó el token, revirtiendo sesión", { error })

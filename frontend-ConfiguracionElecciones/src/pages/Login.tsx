@@ -33,7 +33,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="notranslate min-h-screen bg-gray-50 flex flex-col" translate="no">
 
       {/* Header minimal */}
       <header className="bg-white border-b px-8 py-3 flex items-center justify-between">
@@ -86,6 +86,7 @@ export default function Login() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="usuario@registraduria.gov.co"
+                    translate="no"
                     className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent"
                   />
                 </div>
@@ -106,6 +107,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    translate="no"
                     className="w-full border border-gray-300 rounded-lg pl-9 pr-10 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent"
                   />
                   <button
@@ -121,27 +123,28 @@ export default function Login() {
               </div>
 
               {/* Error message */}
-              {error && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 text-xs text-red-600">
-                  <span className="mt-px flex-shrink-0">&#9888;</span>
-                  <span>{error}</span>
-                </div>
-              )}
+              <div
+                className={error
+                  ? "flex items-start gap-2 bg-red-50 border border-red-200 text-red-600 rounded-lg px-3 py-2.5 text-xs"
+                  : "flex items-start gap-2 border border-transparent text-transparent rounded-lg px-3 py-2.5 text-xs pointer-events-none select-none"}
+                aria-live="polite"
+              >
+                <span className="mt-px flex-shrink-0">&#9888;</span>
+                <span>{error ?? "Sin errores"}</span>
+              </div>
 
               {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
+                translate="no"
                 className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-semibold rounded-lg py-2.5 text-sm transition mt-1 flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Verificando...
-                  </>
-                ) : (
-                  "Ingresar al Sistema"
-                )}
+                <span
+                  className={`w-4 h-4 rounded-full border-2 border-white border-t-transparent ${loading ? "animate-spin opacity-100" : "opacity-0"}`}
+                  aria-hidden="true"
+                />
+                <span>{loading ? "Verificando..." : "Ingresar al Sistema"}</span>
               </button>
             </form>
 

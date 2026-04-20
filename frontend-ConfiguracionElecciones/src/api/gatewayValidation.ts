@@ -28,11 +28,16 @@ export async function validarTokenConGateway(token: string): Promise<void> {
   debugLog("gateway-validation", "Respuesta del gateway", { status: response.status })
 
   if (!response.ok) {
-    const message = await getErrorMessage(
-      response,
+    const fallbackMessage =
       response.status === 401 || response.status === 403
         ? "El gateway rechazó el token. Acceso no autorizado."
-        : "El gateway no pudo validar la sesión."
+        : response.status >= 500
+          ? "El gateway respondió con error interno o el microservicio detrás de esa ruta no está disponible."
+          : "El gateway no pudo validar la sesión."
+
+    const message = await getErrorMessage(
+      response,
+      fallbackMessage
     )
     throw new Error(message)
   }

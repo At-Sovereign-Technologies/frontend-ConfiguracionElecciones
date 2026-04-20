@@ -63,6 +63,73 @@ const exenciones = [
   "Fuerza Mayor Debidamente Acreditada",
 ]
 
+const tipoEleccionLabels: Record<string, string> = {
+  PRESIDENCIAL: "Presidencial",
+  LEGISLATIVA: "Legislativa",
+  TERRITORIAL: "Territorial",
+}
+
+const modalidadLabels: Record<string, string> = {
+  PRESENCIAL: "Presencial",
+  REMOTA: "Remota",
+  AMBAS: "Presencial y remota",
+}
+
+const circunscripcionLabels: Record<string, string> = {
+  NACIONAL: "Nacional",
+  TERRITORIAL: "Territorial",
+  ESPECIAL: "Especial",
+  INTERNACIONAL: "Internacional",
+}
+
+function resolverModalidadEsperada(presencial: boolean | undefined, remota: boolean | undefined) {
+  if (presencial && remota) return "AMBAS"
+  if (presencial) return "PRESENCIAL"
+  if (remota) return "REMOTA"
+  return "PRESENCIAL"
+}
+
+function resolverCircunscripcionEsperada(circunscripcion: CircunscripcionId | undefined) {
+  if (circunscripcion === "nacional") return "NACIONAL"
+  if (circunscripcion === "especiales") return "ESPECIAL"
+  return "TERRITORIAL"
+}
+
+function formatearFechaResumen(valor: unknown) {
+  if (typeof valor !== "string" || !valor.trim()) return null
+
+  const fecha = new Date(valor)
+  if (Number.isNaN(fecha.getTime())) return valor
+
+  return new Intl.DateTimeFormat("es-CO", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(fecha)
+}
+
+function formatearValorCatalogo(
+  valor: unknown,
+  catalogo: Record<string, string>,
+  fallbackClave?: string
+) {
+  if (typeof valor === "string") {
+    const normalizado = valor.trim().toUpperCase()
+    if (catalogo[normalizado]) {
+      return catalogo[normalizado]
+    }
+  }
+
+  if (fallbackClave && catalogo[fallbackClave]) {
+    return catalogo[fallbackClave]
+  }
+
+  return null
+}
+
 function buildCircunscripciones(
   permitidas: CircunscripcionId[],
   activa: CircunscripcionId
@@ -122,6 +189,42 @@ export default function CircunscripcionesElegibilidad() {
   const [datosBorrador, setDatosBorrador] = useState<Record<string, unknown> | null>(null)
   const [pestanaAbierta, setPestanaAbierta] = useState(false)
   const [cargandoBorrador, setCargandoBorrador] = useState(false)
+  const modalidadEsperada = resolverModalidadEsperada(
+    draftPaso1.votacionPresencial,
+    draftPaso1.votacionRemota
+  )
+  const circunscripcionEsperada = resolverCircunscripcionEsperada(
+    circunscripciones.find((circunscripcion) => circunscripcion.estado === "ACTIVA")?.id ??
+      paso3Inicial.circunscripcionActiva
+  )
+
+  function getResumenValor(key: string, valor: unknown) {
+    if (key === "tipoEleccion") {
+      return formatearValorCatalogo(valor, tipoEleccionLabels, draftPaso1.tipoEleccion)
+    }
+
+    if (key === "tipoCircunscripcion") {
+      return formatearValorCatalogo(valor, circunscripcionLabels, circunscripcionEsperada)
+    }
+
+    if (key === "modalidadHabilitada") {
+      return formatearValorCatalogo(valor, modalidadLabels, modalidadEsperada)
+    }
+
+    if (key === "fechaInicioJornada" || key === "fechaCierreJornada") {
+      return formatearFechaResumen(valor)
+    }
+
+    if (typeof valor === "string" && valor.trim()) {
+      return valor
+    }
+
+    if (typeof valor === "number") {
+      return String(valor)
+    }
+
+    return null
+  }
 
   function toggleEstado(id: CircunscripcionId) {
     if (circunscripcionBloqueada) return
@@ -487,11 +590,12 @@ export default function CircunscripcionesElegibilidad() {
                 { label: "Modalidad", key: "modalidadHabilitada" },
                 { label: "Inicio", key: "fechaInicioJornada" },
                 { label: "Cierre", key: "fechaCierreJornada" },
+                { label: "Documento no votable", key: "documentoNoVotable" },
               ].map(({ label, key }) =>
-                datosBorrador[key] != null ? (
+                getResumenValor(key, datosBorrador[key]) != null ? (
                   <div key={key} className="flex gap-1.5 text-xs">
                     <span className="text-gray-500 font-medium w-24 flex-shrink-0">{label}</span>
-                    <span className="text-gray-800 truncate">{String(datosBorrador[key])}</span>
+                    <span className="text-gray-800 truncate">{getResumenValor(key, datosBorrador[key])}</span>
                   </div>
                 ) : null
               )}

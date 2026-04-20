@@ -36,6 +36,16 @@ function normalizarFecha(fecha: string): string | null {
   return fecha
 }
 
+function resolverDocumentoNoVotable(edadDesde: string | undefined): string {
+  const edadMinima = Number.parseInt((edadDesde ?? "").trim(), 10)
+
+  if (Number.isNaN(edadMinima) || edadMinima >= 18) {
+    return "N/A"
+  }
+
+  return "TI"
+}
+
 function buildMicroservicioPayload(draft: ConfiguracionCompletaDraft): Record<string, unknown> {
   const circunscripcionActiva = draft.circunscripcionActiva ?? "nacional"
   const metodoSeleccionado = isMetodoElectoral(draft.metodoSeleccionado)
@@ -79,7 +89,7 @@ function buildMicroservicioPayload(draft: ConfiguracionCompletaDraft): Record<st
     // ── Defaults ─────────────────────────────────────────────────────────────
     zonaHoraria: "America/Bogota",
     idioma: draft.idiomaTargeton ?? "es-CO",
-    documentoIdentidadValido: "CEDULA_CIUDADANIA",
+    documentoNoVotable: resolverDocumentoNoVotable(draft.edadDesde),
   }
 
   // ── Campos específicos por método electoral ──────────────────────────────
