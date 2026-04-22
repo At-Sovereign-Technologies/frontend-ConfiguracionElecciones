@@ -48,10 +48,10 @@ jobs:
           context: .
           file: ./Dockerfile
           build-args: |
-            VITE_API_GATEWAY_URL=http://localhost:8080
-            VITE_AUTHELIA_URL=https://127.0.0.1:9091
+            VITE_API_GATEWAY_URL=https://eleccion.sello-legitimo.site/
+            VITE_AUTHELIA_URL=https://auth.sello-legitimo.site/
             VITE_OIDC_CLIENT_ID=frontend-configuracion
-            VITE_OIDC_REDIRECT_URI=http://localhost:5173/callback
+            VITE_OIDC_REDIRECT_URI=http://eleccion.sello-legitimo.site/
           push: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
