@@ -2,7 +2,7 @@ import { getToken } from "../services/authService"
 import { buildGatewayUrl, createJsonHeaders, getErrorMessage } from "./apiClient"
 import { debugLog } from "../utils/debugLogger"
 
-const CONFIGURACION_ELECCION_BASE_PATH = "/api/configuracion-eleccion"
+const CONFIGURACION_ELECCION_BASE_PATH = "/api/elecciones"
 
 export async function guardarConfiguracionFinal(data: unknown) {
   const url = buildGatewayUrl(CONFIGURACION_ELECCION_BASE_PATH)
