@@ -89,6 +89,27 @@ export default function ParametrosBase() {
   }
 
   async function handleContinuar() {
+    if (!nombreEleccion.trim()) {
+      setErrorGuardado("El nombre de la elección es obligatorio.")
+      return
+    }
+    if (!tipoEleccion) {
+      setErrorGuardado("El tipo de elección es obligatorio.")
+      return
+    }
+    if (!fechaInicio) {
+      setErrorGuardado("La fecha y hora de inicio son obligatorias.")
+      return
+    }
+    if (!fechaCierre) {
+      setErrorGuardado("La fecha y hora de cierre son obligatorias.")
+      return
+    }
+    if (new Date(fechaCierre) <= new Date(fechaInicio)) {
+      setErrorGuardado("La fecha de cierre debe ser posterior a la fecha de inicio.")
+      return
+    }
+
     try {
       await handleGuardarBorrador()
       navigate("/configuracion/metodo-electoral")

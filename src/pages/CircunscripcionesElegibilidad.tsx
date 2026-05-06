@@ -289,6 +289,27 @@ export default function CircunscripcionesElegibilidad() {
   }
 
   async function handleFinalizarConfiguracion() {
+    if (!draftPaso1.nombreEleccion?.trim()) {
+      setErrorGuardado("Faltan datos del Paso 1: nombre de la elección. Vuelve al paso anterior y complétalo.")
+      return
+    }
+    if (!draftPaso1.tipoEleccion) {
+      setErrorGuardado("Faltan datos del Paso 1: tipo de elección. Vuelve al paso anterior y complétalo.")
+      return
+    }
+    if (!draftPaso1.fechaInicio) {
+      setErrorGuardado("Faltan datos del Paso 1: fecha de inicio. Vuelve al paso anterior y complétalo.")
+      return
+    }
+    if (!draftPaso1.fechaCierre) {
+      setErrorGuardado("Faltan datos del Paso 1: fecha de cierre. Vuelve al paso anterior y complétalo.")
+      return
+    }
+    if (!draftPaso2.metodoSeleccionado) {
+      setErrorGuardado("Faltan datos del Paso 2: método electoral. Vuelve al paso anterior y complétalo.")
+      return
+    }
+
     setGuardando(true)
     setErrorGuardado(null)
     setGuardadoExitoso(false)

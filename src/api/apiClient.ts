@@ -26,13 +26,12 @@ export async function getErrorMessage(
   try {
     const body = (await response.json()) as Record<string, unknown>
     const errors = body.errores
+    let message = ""
 
     if (typeof body.mensaje === "string" && body.mensaje.trim()) {
-      return body.mensaje
-    }
-
-    if (typeof body.message === "string" && body.message.trim()) {
-      return body.message
+      message = body.mensaje.trim()
+    } else if (typeof body.message === "string" && body.message.trim()) {
+      message = body.message.trim()
     }
 
     if (errors && typeof errors === "object") {
@@ -41,8 +40,12 @@ export async function getErrorMessage(
         .join(" | ")
 
       if (details) {
-        return details
+        return message ? `${message} — ${details}` : details
       }
+    }
+
+    if (message) {
+      return message
     }
   } catch {
     // Ignore non-JSON responses and use fallback message.
